@@ -49,5 +49,49 @@ describe("ETHDaddy", () => {
       expect(domain.isOwned).to.be.equal
     })
   })
+  describe("Minting", () => {
+    const ID = 1
+    const AMOUNT = ethers.utils.parseUnits("10", 'ether') 
+
+    beforeEach(async () => {
+      const transaction = await ethDaddy.connect(owner1).mint(ID,{value:AMOUNT})
+      await transaction.wait()
+    })
+
+    it('Updates the owner', async () => {
+      const owner = await ethDaddy.ownerOf(ID)
+      expect(owner).to.be.equal(owner1.address)
+    })
+    it('updates the contact balance',async()=>{
+      const result = await ethDaddy.getBalance()
+      expect(result).to.be.equal(AMOUNT)
+    })
+  })
+
+  describe("Withdrawing", () => {
+    const ID = 1
+    const AMOUNT = ethers.utils.parseUnits("10", 'ether')
+    let balanceBefore
+
+    beforeEach(async () => {
+      balanceBefore = await ethers.provider.getBalance(deployer.address)
+
+      let transaction = await ethDaddy.connect(owner1).mint(ID, { value: AMOUNT })
+      await transaction.wait()
+
+      transaction = await ethDaddy.connect(deployer).withdraw()
+      await transaction.wait()
+    })
+
+    it('Updates the owner balance', async () => {
+      const balanceAfter = await ethers.provider.getBalance(deployer.address)
+      expect(balanceAfter).to.be.greaterThan(balanceBefore)
+    })
+
+    it('Updates the contract balance', async () => {
+      const result = await ethDaddy.getBalance()
+      expect(result).to.equal(0)
+    })
+  })
 
 })
